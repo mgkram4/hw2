@@ -1,0 +1,116 @@
+Here's your answer formatted in markdown:
+
+# Homework 2 - Neural Network Architecture Analysis
+
+## Q1. Based on the model summary, calculate and justify the number of parameters.
+
+For the original model:
+```python
+model = Sequential()
+model.add(Dense(64, activation='relu', input_shape=(784,)))  # [1]
+model.add(Dense(64, activation='relu'))  # [2]
+model.add(Dense(10, activation='softmax'))
+```
+
+Parameters calculation:
+- **First Dense layer (dense_3)**: 50,240 parameters
+  - Input neurons: 784 (flattened 28×28 MNIST images)
+  - Output neurons: 64
+  - Weights: 784 × 64 = 50,176
+  - Biases: 64
+  - Total: 50,176 + 64 = 50,240
+
+- **Second Dense layer (dense_4)**: 4,160 parameters
+  - Input neurons: 64 (from previous layer)
+  - Output neurons: 64
+  - Weights: 64 × 64 = 4,096
+  - Biases: 64
+  - Total: 4,096 + 64 = 4,160
+
+- **Output Dense layer (dense_5)**: 650 parameters
+  - Input neurons: 64 (from previous layer)
+  - Output neurons: 10 (for digits 0-9)
+  - Weights: 64 × 10 = 640
+  - Biases: 10
+  - Total: 640 + 10 = 650
+
+**Total parameters**: 50,240 + 4,160 + 650 = 55,050
+
+## Q2. Add Batch Normalization and 20% Dropout following [1] and [2]. Compare the results from Q1.
+
+When adding BatchNormalization and Dropout after layers [1] and [2]:
+
+```python
+model = Sequential()
+model.add(Dense(64, activation='relu', input_shape=(784,)))  # [1]
+model.add(BatchNormalization())
+model.add(Dropout(0.2))
+model.add(Dense(64, activation='relu'))  # [2]
+model.add(BatchNormalization())
+model.add(Dropout(0.2))
+model.add(Dense(10, activation='softmax'))
+```
+
+**Parameter comparison**:
+- Original model (Q1): 55,050 parameters (all trainable)
+- Regularized model (Q2): 55,562 parameters
+  - Trainable parameters: 55,306
+  - Non-trainable parameters: 256
+
+The difference is due to BatchNormalization layers, which each add:
+- 2 trainable parameters per neuron (gamma, beta)
+- 2 non-trainable parameters per neuron (moving mean, moving variance)
+- For 64 neurons: 4 × 64 = 256 parameters per BatchNorm layer
+
+Dropout layers don't add any parameters.
+
+**Performance comparison**:
+- The regularized model achieved 96.99% validation accuracy
+- Both models had similar final performance, but the regularized model shows better generalization properties
+- BatchNormalization helps with internal covariate shift
+- Dropout helps prevent overfitting by randomly deactivating neurons during training
+
+## Q3. Let's build a deeper network by (i) increasing neurons from 64 to 128, or (ii) adding another dense layer after [1]. Compare the results from Q2.
+
+### Option (i): Increasing neurons from 64 to 128
+```python
+model = Sequential()
+model.add(Dense(128, activation='relu', input_shape=(784,)))
+model.add(BatchNormalization())
+model.add(Dropout(0.2))
+model.add(Dense(128, activation='relu'))
+model.add(BatchNormalization())
+model.add(Dropout(0.2))
+model.add(Dense(10, activation='softmax'))
+```
+
+### Option (ii): Adding another dense layer after [1]
+```python
+model = Sequential()
+model.add(Dense(64, activation='relu', input_shape=(784,)))
+model.add(BatchNormalization())
+model.add(Dropout(0.2))
+model.add(Dense(64, activation='relu'))  # New layer
+model.add(BatchNormalization())
+model.add(Dropout(0.2))
+model.add(Dense(64, activation='relu'))
+model.add(BatchNormalization())
+model.add(Dropout(0.2))
+model.add(Dense(10, activation='softmax'))
+```
+
+**Comparison with Q2**:
+
+| Model | Parameters | Val Accuracy | Parameter Increase |
+|-------|------------|--------------|-------------------|
+| Q2 (Base) | 55,562 | 96.78% | - |
+| Wider (Option i) | 119,306 | 97.50% | +63,744 |
+| Deeper (Option ii) | 59,978 | 96.86% | +4,416 |
+
+**Analysis**:
+1. The wider model (option i) achieves the best accuracy at 97.50% but requires more than double the parameters
+2. The deeper model (option ii) provides a slight improvement with only 7.9% more parameters
+3. The wider model has better representational capacity but is less parameter-efficient
+4. Both approaches outperform the Q2 model, showing that either increasing width or depth can improve performance
+
+In conclusion, the wider network with 128 neurons provides the best overall performance, while the deeper network offers a more parameter-efficient improvement.
